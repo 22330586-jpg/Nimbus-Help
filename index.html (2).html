@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lingua — Translation Tool · CodeAlpha</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Inter:wght@400;500;600&family=Space+Mono&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#0d1220;
+    --bg2:#131a2e;
+    --panel:rgba(255,255,255,.04);
+    --panel-line:rgba(255,255,255,.09);
+    --ink:#eef1f8;
+    --muted:#8c93a8;
+    --indigo:#7c6bff;
+    --indigo-soft:rgba(124,107,255,.16);
+    --coral:#ff7a66;
+    --ok:#54d6a0;
+    --radius:18px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:Inter,system-ui,sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(1100px 600px at 12% -10%, #20264a 0%, transparent 55%),
+      radial-gradient(900px 600px at 110% 10%, #2a1c40 0%, transparent 50%),
+      var(--bg);
+    min-height:100%;
+    padding:clamp(16px,4vw,40px);
+    display:flex;flex-direction:column;align-items:center;
+  }
+  .wrap{width:100%;max-width:920px}
+
+  header{display:flex;align-items:center;gap:14px;margin-bottom:26px}
+  .mark{
+    width:46px;height:46px;border-radius:13px;flex:none;
+    background:linear-gradient(135deg,var(--indigo),var(--coral));
+    display:grid;place-items:center;font-family:Sora;font-weight:700;font-size:22px;color:#fff;
+    box-shadow:0 10px 30px -10px var(--indigo);
+  }
+  h1{font-family:Sora;font-weight:700;font-size:clamp(20px,3.4vw,27px);letter-spacing:-.02em}
+  header p{color:var(--muted);font-size:13px;margin-top:2px}
+
+  .deck{
+    display:grid;grid-template-columns:1fr 56px 1fr;gap:14px;align-items:stretch;
+  }
+  .panel{
+    background:var(--panel);border:1px solid var(--panel-line);
+    border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;
+    min-height:300px;backdrop-filter:blur(8px);
+  }
+  .panel-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+  .lang-select{
+    appearance:none;background:var(--indigo-soft);color:var(--ink);
+    border:1px solid var(--panel-line);border-radius:11px;
+    padding:9px 34px 9px 13px;font:600 14px Inter;cursor:pointer;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238c93a8' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 12px center;
+  }
+  .tag{font:600 11px/1 Space Mono;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+  textarea,.output{
+    flex:1;width:100%;border:0;background:transparent;color:var(--ink);
+    font:400 17px/1.55 Inter;resize:none;outline:none;
+  }
+  .output{overflow-y:auto;white-space:pre-wrap}
+  .output.placeholder{color:var(--muted)}
+  .panel-foot{display:flex;align-items:center;justify-content:space-between;margin-top:12px;gap:8px}
+  .count{font:400 12px Space Mono;color:var(--muted)}
+  .iconbtn{
+    background:transparent;border:1px solid var(--panel-line);border-radius:10px;
+    color:var(--muted);width:38px;height:34px;cursor:pointer;display:grid;place-items:center;
+    transition:.15s;
+  }
+  .iconbtn:hover{color:var(--ink);border-color:var(--indigo);background:var(--indigo-soft)}
+  .iconbtn.done{color:var(--ok);border-color:var(--ok)}
+  .foot-actions{display:flex;gap:8px}
+
+  .swap-col{display:flex;align-items:center;justify-content:center}
+  .swap{
+    width:48px;height:48px;border-radius:50%;flex:none;cursor:pointer;
+    border:1px solid var(--panel-line);background:var(--bg2);color:var(--ink);
+    display:grid;place-items:center;transition:transform .35s cubic-bezier(.5,1.6,.4,1),border-color .2s;
+  }
+  .swap:hover{border-color:var(--coral)}
+  .swap.spin{transform:rotate(180deg)}
+
+  .go{
+    margin-top:18px;width:100%;border:0;cursor:pointer;
+    background:linear-gradient(135deg,var(--indigo),#9b6bff);
+    color:#fff;font:600 16px Sora;padding:15px;border-radius:14px;
+    box-shadow:0 14px 34px -12px var(--indigo);transition:.15s;
+  }
+  .go:hover{filter:brightness(1.07)}
+  .go:disabled{opacity:.55;cursor:not-allowed;filter:none}
+
+  .status{min-height:20px;margin-top:12px;text-align:center;font-size:13px;color:var(--muted)}
+  .status.err{color:var(--coral)}
+  .spinner{
+    width:15px;height:15px;border:2px solid var(--indigo-soft);border-top-color:var(--indigo);
+    border-radius:50%;display:inline-block;vertical-align:-2px;margin-right:7px;animation:sp .7s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+
+  footer{margin-top:30px;color:var(--muted);font-size:12px;text-align:center}
+  footer b{color:#b9bfd6;font-weight:600}
+
+  @media(max-width:680px){
+    .deck{grid-template-columns:1fr;gap:10px}
+    .swap-col{order:2;height:48px}
+    .swap.spin{transform:rotate(90deg)}
+    .panel{min-height:200px}
+  }
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+  :focus-visible{outline:2px solid var(--indigo);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="mark">Lq</div>
+    <div>
+      <h1>Lingua</h1>
+      <p>Type, pick two languages, translate.</p>
+    </div>
+  </header>
+
+  <div class="deck">
+    <!-- SOURCE -->
+    <section class="panel">
+      <div class="panel-top">
+        <select id="srcLang" class="lang-select" aria-label="Source language"></select>
+        <span class="tag">From</span>
+      </div>
+      <textarea id="srcText" placeholder="Enter text to translate…" maxlength="4000" autofocus></textarea>
+      <div class="panel-foot">
+        <span class="count" id="count">0 / 4000</span>
+        <div class="foot-actions">
+          <button class="iconbtn" id="speakSrc" title="Read aloud" aria-label="Read source aloud">🔊</button>
+          <button class="iconbtn" id="clearSrc" title="Clear" aria-label="Clear text">✕</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SWAP -->
+    <div class="swap-col">
+      <button class="swap" id="swap" title="Swap languages" aria-label="Swap languages">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4M7 4L3 8M7 4l4 4M17 8v12M17 20l4-4M17 20l-4-4"/></svg>
+      </button>
+    </div>
+
+    <!-- TARGET -->
+    <section class="panel">
+      <div class="panel-top">
+        <select id="tgtLang" class="lang-select" aria-label="Target language"></select>
+        <span class="tag">To</span>
+      </div>
+      <div class="output placeholder" id="out">Translation appears here.</div>
+      <div class="panel-foot">
+        <span class="count" id="detected"></span>
+        <div class="foot-actions">
+          <button class="iconbtn" id="speakOut" title="Read aloud" aria-label="Read translation aloud">🔊</button>
+          <button class="iconbtn" id="copyOut" title="Copy" aria-label="Copy translation">⧉</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <button class="go" id="go">Translate</button>
+  <div class="status" id="status"></div>
+
+  <footer>Built for the <b>CodeAlpha</b> Internship · AI Task 1 · Translation API by MyMemory</footer>
+</div>
+
+<script>
+/* ---------- language list (MyMemory uses ISO codes) ---------- */
+const LANGS = [
+  ["en","English"],["es","Spanish"],["fr","French"],["de","German"],["it","Italian"],
+  ["pt","Portuguese"],["nl","Dutch"],["ru","Russian"],["ar","Arabic"],["hi","Hindi"],
+  ["zh","Chinese"],["ja","Japanese"],["ko","Korean"],["tr","Turkish"],["pl","Polish"],
+  ["sv","Swedish"],["el","Greek"],["he","Hebrew"],["uk","Ukrainian"],["id","Indonesian"],
+  ["fa","Persian"],["ur","Urdu"],["vi","Vietnamese"],["th","Thai"],["ro","Romanian"]
+];
+const $ = id => document.getElementById(id);
+const srcSel = $("srcLang"), tgtSel = $("tgtLang");
+
+function fill(sel, def){
+  LANGS.forEach(([code,name])=>{
+    const o=document.createElement("option");
+    o.value=code;o.textContent=name;if(code===def)o.selected=true;sel.appendChild(o);
+  });
+}
+fill(srcSel,"en"); fill(tgtSel,"es");
+
+/* ---------- char counter ---------- */
+const srcText=$("srcText"), count=$("count");
+srcText.addEventListener("input",()=>{count.textContent=`${srcText.value.length} / 4000`;});
+
+/* ---------- clear ---------- */
+$("clearSrc").addEventListener("click",()=>{
+  srcText.value=""; count.textContent="0 / 4000"; srcText.focus();
+  resetOut();
+});
+function resetOut(){
+  const out=$("out"); out.textContent="Translation appears here.";
+  out.classList.add("placeholder"); $("detected").textContent="";
+}
+
+/* ---------- swap ---------- */
+$("swap").addEventListener("click",()=>{
+  const btn=$("swap"); btn.classList.toggle("spin");
+  const a=srcSel.value, b=tgtSel.value; srcSel.value=b; tgtSel.value=a;
+  // also swap the texts if a translation exists
+  const out=$("out");
+  if(!out.classList.contains("placeholder")){
+    srcText.value=out.textContent; count.textContent=`${srcText.value.length} / 4000`; resetOut();
+  }
+});
+
+/* ---------- translate ---------- */
+const go=$("go"), status=$("status"), out=$("out");
+async function translate(){
+  const text=srcText.value.trim();
+  if(!text){ setStatus("Type something to translate first.",true); srcText.focus(); return; }
+  if(srcSel.value===tgtSel.value){ setStatus("Source and target languages match — pick two different ones.",true); return; }
+
+  go.disabled=true;
+  status.classList.remove("err");
+  status.innerHTML='<span class="spinner"></span>Translating…';
+
+  const url=`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${srcSel.value}|${tgtSel.value}`;
+  try{
+    const res=await fetch(url);
+    if(!res.ok) throw new Error("Network response "+res.status);
+    const data=await res.json();
+    if(data.responseStatus && data.responseStatus!==200 && !data.responseData?.translatedText){
+      throw new Error(data.responseDetails||"Translation failed");
+    }
+    const translated=data.responseData.translatedText;
+    out.textContent=translated;
+    out.classList.remove("placeholder");
+    const m=data.responseData.match;
+    $("detected").textContent = m!=null ? `match ${Math.round(m*100)}%` : "";
+    setStatus("");
+  }catch(err){
+    setStatus("Could not translate: "+err.message+". Check your connection and try again.",true);
+  }finally{
+    go.disabled=false;
+    if(status.querySelector(".spinner")) status.innerHTML="";
+  }
+}
+function setStatus(msg,isErr){
+  status.innerHTML=msg; status.classList.toggle("err",!!isErr);
+}
+go.addEventListener("click",translate);
+srcText.addEventListener("keydown",e=>{ if(e.key==="Enter"&&(e.ctrlKey||e.metaKey)) translate(); });
+
+/* ---------- copy ---------- */
+$("copyOut").addEventListener("click",async e=>{
+  if(out.classList.contains("placeholder"))return;
+  try{
+    await navigator.clipboard.writeText(out.textContent);
+    const b=e.currentTarget; b.classList.add("done"); b.textContent="✓";
+    setTimeout(()=>{b.classList.remove("done");b.textContent="⧉";},1300);
+  }catch{ setStatus("Copy not available in this browser.",true); }
+});
+
+/* ---------- text-to-speech ---------- */
+function speak(textEl, langCode){
+  if(!("speechSynthesis" in window)){ setStatus("Speech isn't supported in this browser.",true); return; }
+  const text = textEl.value!==undefined ? textEl.value : textEl.textContent;
+  if(!text || textEl.classList?.contains("placeholder")) return;
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text); u.lang=langCode; speechSynthesis.speak(u);
+}
+$("speakSrc").addEventListener("click",()=>speak(srcText,srcSel.value));
+$("speakOut").addEventListener("click",()=>speak(out,tgtSel.value));
+</script>
+</body>
+</html>
